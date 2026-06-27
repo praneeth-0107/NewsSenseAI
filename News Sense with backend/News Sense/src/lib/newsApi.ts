@@ -14,16 +14,12 @@ function buildUrl(path: string, params: Record<string, string | number | undefin
 }
 
 async function fetchNews(url: string): Promise<Article[]> {
-  if (!NEWS_API_KEY) {
-    throw new Error('Missing NewsAPI key. Set VITE_NEWSAPI_KEY in .env');
-  }
-  const response = await fetch(url, {
-    headers: {
-      'X-Api-Key': NEWS_API_KEY,
-    },
-  });
-
+  // Proxy the request through our backend to bypass browser CORS restrictions
+  const proxyUrl = `/api/news?targetUrl=${encodeURIComponent(url)}`;
+  
+  const response = await fetch(proxyUrl);
   const data = await response.json();
+  
   if (!response.ok || data.status !== 'ok') {
     throw new Error(data.message || 'Failed to load news');
   }

@@ -98,6 +98,33 @@ app.put('/api/auth/profile', (req, res) => {
   });
 });
 
+// Proxy NewsAPI requests to bypass browser CORS
+app.get('/api/news', async (req, res) => {
+  const targetUrl = req.query.targetUrl;
+  if (!targetUrl) {
+    return res.status(400).json({ error: 'targetUrl is required' });
+  }
+
+  try {
+    const apiKey = process.env.VITE_NEWSAPI_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Server is missing VITE_NEWSAPI_KEY' });
+    }
+
+    const fetchResponse = await fetch(targetUrl, {
+      headers: {
+        'X-Api-Key': apiKey,
+      },
+    });
+
+    const data = await fetchResponse.json();
+    res.status(fetchResponse.status).json(data);
+  } catch (error) {
+    console.error('Error fetching from NewsAPI:', error);
+    res.status(500).json({ error: 'Failed to fetch news' });
+  }
+});
+
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../dist')));
 
